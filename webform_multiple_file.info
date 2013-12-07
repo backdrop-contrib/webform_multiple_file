@@ -1,0 +1,9 @@
+name = Webform multiple file
+description = Adds a new component to webform to allow multiple file uploads.
+core = 7.x
+package = Webform
+
+dependencies[] = webform
+dependencies[] = file
+
+files[] = webform_multiple_file.webform.inc

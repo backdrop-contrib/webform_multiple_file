@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * @file
+ * Provides functions and hook implementations for webform multiple file module.
+ */
+
+/**
+ * Value for field API indicating a field accepts an unlimited number of values.
+ */
+define('WEBFORM_MULTIPLE_FILE_CARDINALITY_UNLIMITED', -1);
+
+/**
+ * Implementation of hook_webform_component_info().
+ */
+function webform_multiple_file_webform_component_info() {
+  $components = array();
+
+  $components['multiple_file'] = array(
+    'label' => t('Multiple file'),
+    'description' => t('Multiple file upload support for webform.'),
+    'features' => array(
+      'conditional' => FALSE,
+      'attachment' => TRUE,
+    ),
+    'file' => 'webform_multiple_file.webform.inc',
+  );
+
+  return $components;
+}

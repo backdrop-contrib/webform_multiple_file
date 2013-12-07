@@ -1,0 +1,505 @@
+<?php
+
+/**
+ * @file
+ * Provides features for webform multiple file upload component.
+ */
+
+/**
+ * Implements _webform_defaults_component().
+ */
+function _webform_defaults_multiple_file() {
+  return array(
+    'name' => '',
+    'form_key' => NULL,
+    'mandatory' => 0,
+    'pid' => 0,
+    'weight' => 0,
+    'extra' => array(
+      'filtering' => array(
+        'types' => array('gif', 'jpg', 'png'),
+        'addextensions' => '',
+        'size' => '2 MB',
+      ),
+      'scheme' => 'public',
+      'directory' => '',
+      'progress_indicator' => 'throbber',
+      'title_display' => 0,
+      'description' => '',
+      'attributes' => array(),
+      'private' => FALSE,
+    ),
+  );
+}
+
+/**
+ * Implements _webform_theme_component().
+ */
+function _webform_theme_multiple_file() {
+  return array(
+    'webform_display_multiple_files_set' => array(
+      'render element' => 'element',
+    ),
+  );
+}
+
+
+/**
+ * Implements _webform_edit_component().
+ */
+function _webform_edit_multiple_file($component) {
+  $form = array();
+  $form['#element_validate'] = array('_webform_edit_file_check_directory');
+  $form['#after_build'] = array('_webform_edit_file_check_directory');
+
+  $form['validation']['size'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Max upload size'),
+    '#default_value' => $component['extra']['filtering']['size'],
+    '#description' => t('Enter the max file size a user may upload such as 2 MB or 800 KB. Your server has a max upload size of @size.', array('@size' => format_size(file_upload_max_size()))),
+    '#size' => 10,
+    '#parents' => array('extra', 'filtering', 'size'),
+    '#element_validate' => array('_webform_edit_file_size_validate'), // @todo: check validation.
+    '#weight' => 1,
+  );
+
+  $form['validation']['extensions'] = array(
+    '#element_validate' => array('_webform_edit_file_extensions_validate'),
+    '#parents' => array('extra', 'filtering'),
+    '#theme' => 'webform_edit_file_extensions',
+    '#theme_wrappers' => array('form_element'),
+    '#title' => t('Allowed file extensions'),
+    '#attached' => array(
+      'js' => array(drupal_get_path('module', 'webform') . '/js/webform-admin.js'),
+      'css' => array(drupal_get_path('module', 'webform') . '/css/webform-admin.css'),
+    ),
+    '#weight' => 2,
+  );
+
+  // Find the list of all currently valid extensions.
+  $current_types = isset($component['extra']['filtering']['types']) ? $component['extra']['filtering']['types'] : array();
+
+  $types = array('gif', 'jpg', 'png');
+  $form['validation']['extensions']['types']['webimages'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Web images'),
+    '#options' => drupal_map_assoc($types),
+    '#default_value' => array_intersect($current_types, $types),
+  );
+
+  $types = array('bmp', 'eps', 'tif', 'pict', 'psd');
+  $form['validation']['extensions']['types']['desktopimages'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Desktop images'),
+    '#options' => drupal_map_assoc($types),
+    '#default_value' => array_intersect($current_types, $types),
+  );
+
+  $types = array('txt', 'rtf', 'html', 'odf', 'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'xml');
+  $form['validation']['extensions']['types']['documents'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Documents'),
+    '#options' => drupal_map_assoc($types),
+    '#default_value' => array_intersect($current_types, $types),
+  );
+
+  $types = array('avi', 'mov', 'mp3', 'ogg', 'wav');
+  $form['validation']['extensions']['types']['media'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Media'),
+    '#options' => drupal_map_assoc($types),
+    '#default_value' => array_intersect($current_types, $types),
+  );
+
+  $types = array('bz2', 'dmg', 'gz', 'jar', 'rar', 'sit', 'tar', 'zip');
+  $form['validation']['extensions']['types']['archives'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Archives'),
+    '#options' => drupal_map_assoc($types),
+    '#default_value' => array_intersect($current_types, $types),
+  );
+
+  $form['validation']['extensions']['addextensions'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Additional extensions'),
+    '#default_value' => $component['extra']['filtering']['addextensions'],
+    '#description' => t('Enter a list of additional file extensions for this upload field, separated by commas.<br /> Entered extensions will be appended to checked items above.'),
+    '#size' => 20,
+    '#weight' => 3,
+  );
+
+  $scheme_options = array();
+  foreach (file_get_stream_wrappers(STREAM_WRAPPERS_WRITE_VISIBLE) as $scheme => $stream_wrapper) {
+    $scheme_options[$scheme] = $stream_wrapper['name'];
+  }
+  $form['extra']['scheme'] = array(
+    '#type' => 'radios',
+    '#title' => t('Upload destination'),
+    '#options' => $scheme_options,
+    '#default_value' => $component['extra']['scheme'],
+    '#description' => t('Private file storage has significantly more overhead than public files, but restricts file access to users who can view submissions.'),
+    '#weight' => 4,
+    '#access' => count($scheme_options) > 1,
+  );
+  $form['extra']['directory'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Upload directory'),
+    '#default_value' => $component['extra']['directory'],
+    '#description' => t('You may optionally specify a sub-directory to store your files.'),
+    '#weight' => 5,
+    '#field_prefix' => 'webform/',
+  );
+  $options = array(WEBFORM_MULTIPLE_FILE_CARDINALITY_UNLIMITED => t('Unlimited')) + drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+  $form['extra']['cardinality'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of values'),
+    '#options' => $options,
+    '#default_value' => isset($component['extra']['cardinality']) ? $component['extra']['cardinality'] : WEBFORM_MULTIPLE_FILE_CARDINALITY_UNLIMITED,
+    '#weight' => 5,
+  );
+
+  $form['display']['progress_indicator'] = array(
+    '#type' => 'radios',
+    '#title' => t('Progress indicator'),
+    '#options' => array(
+      'throbber' => t('Throbber'),
+      'bar' => t('Bar with progress meter'),
+    ),
+    '#default_value' => $component['extra']['progress_indicator'],
+    '#description' => t('The throbber display does not show the status of uploads but takes up less space. The progress bar is helpful for monitoring progress on large uploads.'),
+    '#weight' => 16,
+    '#access' => file_progress_implementation(),
+    '#parents' => array('extra', 'progress_indicator'),
+  );
+
+  return $form;
+}
+
+/**
+ * Implements _webform_render_component().
+ */
+function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE) {
+  $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
+
+  // Cap the upload size according to the PHP limit.
+  $max_filesize = parse_size(file_upload_max_size());
+  $set_filesize = $component['extra']['filtering']['size'];
+  if (!empty($set_filesize) && parse_size($set_filesize) < $max_filesize) {
+    $max_filesize = parse_size($set_filesize);
+  }
+
+  $element_info = element_info('managed_file');
+  $element = array(
+    '#type' => 'managed_file',
+    '#title' => $filter ? _webform_filter_xss($component['name']) : $component['name'],
+    '#title_display' => $component['extra']['title_display'] ? $component['extra']['title_display'] : 'before',
+    '#required' => $component['mandatory'],
+    '#default_value' => isset($value[0]) ? $value[0] : NULL,
+    '#attributes' => $component['extra']['attributes'],
+    '#upload_validators' => array(
+      'file_validate_size' => array($max_filesize),
+      'file_validate_extensions' => array(implode(' ', $component['extra']['filtering']['types'])),
+    ),
+    '#pre_render' => array_merge(element_info_property('managed_file', '#pre_render'), array('webform_file_allow_access')),
+    '#upload_location' => $component['extra']['scheme'] . '://webform/' . $component['extra']['directory'],
+    '#progress_indicator' => $component['extra']['progress_indicator'],
+    '#description' => $filter ? _webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
+    '#weight' => $component['weight'],
+    '#process' => array_merge($element_info['#process'], array('webform_multiple_file_process_element')),
+    'webform_multiple_file_form_key' => array(
+      '#type' => 'hidden',
+      '#value' => $component['form_key'],
+    ),
+  );
+
+  if ($component['extra']['cardinality'] == 1) {
+    // Set the default value.
+    if (!empty($value)) {
+      if (is_array($value[0])) {
+        $fid = $value[0]['fid'];
+      }
+      else {
+        $fid = $value;
+      }
+    }
+    $element['#default_value'] = !empty($fid) ? array('fid' => $fid) : array();
+    // If there's only one field, return it as delta 0.
+    if (empty($element['#default_value']['fid'])) {
+      $element['#description'] = theme('file_upload_help', array('description' => $element['#description'], 'upload_validators' => $element['#upload_validators']));
+    }
+    $elements = array($element);
+  }
+  else {
+    $delta = 0;
+    if (!empty($value)) {
+      foreach ($value as $item) {
+        if (is_array($item)) {
+          $fid = $item['fid'];
+        }
+        else {
+          $fid = $item;
+        }
+
+        $elements[$delta] = $element;
+        $elements[$delta]['#default_value'] = !empty($fid) ? array('fid' => $fid) : array();
+        $elements[$delta]['#weight'] = $delta;
+        $delta++;
+      }
+    }
+    // And then add one more empty row for new uploads except when this is a
+    // programmed form as it is not necessary.
+    if (($component['extra']['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $delta < $component['extra']['cardinality']) && empty($form_state['programmed'])) {
+      $elements[$delta] = $element;
+      $elements[$delta]['#default_value'] = array();
+      $elements[$delta]['#weight'] = $delta;
+    }
+
+    // The group of elements all-together need some extra functionality
+    // after building up the full list (like draggable table rows).
+    $elements['#file_upload_delta'] = $delta;
+    $elements['#theme'] = 'file_widget_multiple';
+    $elements['#theme_wrappers'] = array('fieldset', 'webform_element');
+    $elements['#process'] = array('file_field_widget_process_multiple');
+    $elements['#title'] = $element['#title'];
+    $elements['#title_display'] = 'invisible';
+    $elements['#display_field'] = 0; // Needed for theme_file_widget_multiple().
+    $elements['#description'] = $element['#description'];
+
+    // Add some properties that will eventually be added to the file upload
+    // field. These are added here so that they may be referenced easily through
+    // a hook_form_alter().
+    $elements['#file_upload_title'] = t('Add a new file');
+    $elements['#file_upload_description'] = theme('file_upload_help', array('description' => '', 'upload_validators' => $elements[0]['#upload_validators']));
+  }
+
+  return $elements;
+}
+
+/**
+ * Implements _webform_submit_component().
+ */
+function _webform_submit_multiple_file($component, $value) {
+  return array_filter($value);
+}
+
+/**
+ * Implements _webform_display_component().
+ */
+function _webform_display_multiple_file($component, $value, $format = 'html') {
+ if (!empty($value)) {
+   $files = array();
+   foreach ($value as $key => $fid) {
+     $files[] = array(
+       '#value' => $fid ? webform_get_file($fid) : NULL,
+       '#weight' => $component['weight'],
+       '#theme' => 'webform_display_file',
+       '#theme_wrappers' => array('webform_display_multiple_files_set'),
+       '#format' => $format,
+       '#translatable' => array('title'),
+       '#parents' => array($key)
+     );
+   }
+   $files['#title'] = $component['name'];
+   $files['#theme_wrappers'] =  $format == 'text' ? array('webform_element_text') : array('webform_element');
+ }
+ return !empty($files) ? $files : NULL;
+}
+
+/**
+ * Implements _webform_delete_component().
+ */
+function _webform_delete_multiple_file($component, $value) {
+  if(!empty($value)) {
+    foreach ($value as $fid) {
+      if (!empty($fid) && ($file = webform_get_file($fid))) {
+        file_usage_delete($file, 'webform');
+        file_delete($file);
+      }
+    }
+  }
+}
+
+
+/**
+ * Implements _webform_attachments_component().
+ * @todo: not tested!
+ */
+function _webform_attachments_multiple_file($component, $value) {
+  foreach ($value as $fid) {
+    $file = (array) webform_get_file($fid);
+    if (!empty($file)) {
+      //This is necessary until the next release of mimemail is out, see [#1388786]
+      $file['filepath'] = $file['uri'];
+      $files[] = $file;
+    }
+  }
+
+  return !empty($files) ? $files : NULL;
+}
+
+/**
+ * Implements _webform_analysis_component().
+ * @todo: not correct working! Investigate & fix!
+ */
+function _webform_analysis_multiple_file($component, $sids = array()) {
+  $query = db_select('webform_submitted_data', 'wsd', array('fetch' => PDO::FETCH_ASSOC))
+    ->fields('wsd', array('no', 'data'))
+    ->condition('nid', $component['nid'])
+    ->condition('cid', $component['cid']);
+
+  if (count($sids)) {
+    $query->condition('sid', $sids, 'IN');
+  }
+
+  $nonblanks = 0;
+  $sizetotal = 0;
+  $submissions = 0;
+
+  $result = $query->execute();
+  foreach ($result as $data) {
+    $file = webform_get_file($data['data']);
+    if (isset($file->filesize)) {
+      $nonblanks++;
+      $sizetotal += $file->filesize;
+    }
+    $submissions++;
+  }
+
+  $rows[0] = array(t('Left Blank'), ($submissions - $nonblanks));
+  $rows[1] = array(t('User uploaded file'), $nonblanks);
+  $rows[2] = array(t('Average uploaded file size'), ($sizetotal != 0 ? (int) (($sizetotal/$nonblanks)/1024) . ' KB' : '0'));
+  return $rows;
+}
+
+/**
+ * Implements _webform_table_component().
+ */
+function _webform_table_multiple_file($component, $value) {
+  $output = '';
+  foreach ($value as $fid) {
+    $file = webform_get_file($fid);
+    if (!empty($file->fid)) {
+      $output .= '<a href="' . webform_file_url($file->uri) . '">' . check_plain(webform_file_name($file->uri)) . '</a>';
+      $output .= ' (' . (int) ($file->filesize/1024) . ' KB)';
+      $output .= "<br />\n";
+    }
+  }
+
+  return $output;
+}
+
+/**
+ * Implements _webform_csv_headers_component().
+ */
+function _webform_csv_headers_multiple_file($component, $export_options) {
+  $header = array();
+  // Two columns in header.
+  $header[0] = array('', '');
+  $header[1] = array($component['name'], '');
+  $header[2] = array(t('Name'), t('Filesize (KB)'));
+  return $header;
+}
+
+/**
+ * Implements _webform_csv_data_component().
+ */
+function _webform_csv_data_multiple_file($component, $export_options, $value) {
+  $files_size = 0;
+  $file_urls = array();
+
+  foreach ($value as $fid) {
+    $file = webform_get_file($fid);
+    if (!empty($file->filename)) {
+      $file_urls[] = webform_file_url($file->uri);
+      $files_size += $file->filesize/1024;
+    }
+  }
+
+  return empty($files_size) ? array('', '') : array(implode("\r\n", $file_urls), (int) $files_size);
+}
+
+/**
+ * Process form element callback.
+ * Adds changes to managed_file element structure.
+ *
+ * @see file_field_widget_process().
+ */
+function webform_multiple_file_process_element($element, &$form_state, $form) {
+  $item = $element['#value'];
+  $item['fid'] = $element['fid']['#value'];
+
+  // @todo: replace function.
+  $element['#theme'] = 'file_widget';
+
+  // Adjust the Ajax settings so that on upload and remove of any individual
+  // file, the entire group of file fields is updated together.
+  $form_key = $element['webform_multiple_file_form_key']['#value'];
+  $cardinality = $form['submitted'][$form_key]['#webform_component']['extra']['cardinality'];
+  if ($cardinality != 1) {
+    $parents = array_slice($element['#array_parents'], 0, -1);
+    $new_path = 'file/ajax/' . implode('/', $parents) . '/' . $form['form_build_id']['#value'];
+    $component_element = drupal_array_get_nested_value($form, $parents);
+    $new_wrapper = $component_element['#id'] . '-ajax-wrapper';
+    foreach (element_children($element) as $key) {
+      if (isset($element[$key]['#ajax'])) {
+        $element[$key]['#ajax']['path'] = $new_path;
+        $element[$key]['#ajax']['wrapper'] = $new_wrapper;
+      }
+    }
+    unset($element['#prefix'], $element['#suffix']);
+  }
+
+  // Add another submit handler to the upload and remove buttons, to implement
+  // functionality needed by the webform component. This submit handler, along with
+  // the rebuild logic requires the entire field, not just the individual item, to be valid.
+  foreach (array('upload_button', 'remove_button') as $key) {
+    $element[$key]['#submit'][] = 'webform_multiple_file_managed_file_submit';
+    $element[$key]['#limit_validation_errors'] = array(array_slice($element['#parents'], 0, -1));
+  }
+
+  return $element;
+}
+
+/**
+ * Form submission handler for upload/remove button of managed_file
+ * in multiple_file webform component.
+ *
+ * This runs in addition to and after file_managed_file_submit().
+ *
+ * @see file_managed_file_submit()
+ * @see webform_multiple_file_process_element()
+ * @see file_field_widget_submit()
+ */
+function webform_multiple_file_managed_file_submit($form, &$form_state) {
+  // @todo: rewrite comment
+  // During the form rebuild, file_field_widget_form() will create field item
+  // widget elements using re-indexed deltas, so clear out $form_state['input']
+  // to avoid a mismatch between old and new deltas. The rebuilt elements will
+  // have #default_value set appropriately for the current state of the field,
+  // so nothing is lost in doing this.
+  $parents = array_slice($form_state['triggering_element']['#parents'], 0, -2);
+  drupal_array_set_nested_value($form_state['input'], $parents, NULL);
+
+  $button = $form_state['triggering_element'];
+
+  $submitted_values = drupal_array_get_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -2));
+  foreach ($submitted_values as $delta => $submitted_value) {
+    if (!$submitted_value['fid']) {
+      unset($submitted_values[$delta]);
+    }
+  }
+
+  // Re-index deltas after removing empty items.
+  $submitted_values = array_values($submitted_values);
+
+  // Update form_state values.
+  drupal_array_set_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -2), $submitted_values);
+}
+
+/**
+ * Theme function for multiple file wrapping.
+ */
+function theme_webform_display_multiple_files_set($variables) {
+  $output = '<div class="webform-multiple-file">' . $variables['element']['#children'] . '</div>';
+  return $output;
+}
