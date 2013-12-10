@@ -59,7 +59,7 @@ function _webform_edit_multiple_file($component) {
     '#description' => t('Enter the max file size a user may upload such as 2 MB or 800 KB. Your server has a max upload size of @size.', array('@size' => format_size(file_upload_max_size()))),
     '#size' => 10,
     '#parents' => array('extra', 'filtering', 'size'),
-    '#element_validate' => array('_webform_edit_file_size_validate'), // @todo: check validation.
+    '#element_validate' => array('_webform_edit_file_size_validate'),
     '#weight' => 1,
   );
 
@@ -193,7 +193,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     '#type' => 'managed_file',
     '#title' => $filter ? _webform_filter_xss($component['name']) : $component['name'],
     '#title_display' => $component['extra']['title_display'] ? $component['extra']['title_display'] : 'before',
-    '#required' => $component['mandatory'],
+    '#required' => empty($value) ? $component['mandatory'] : FALSE,
     '#default_value' => isset($value[0]) ? $value[0] : NULL,
     '#attributes' => $component['extra']['attributes'],
     '#upload_validators' => array(
@@ -206,8 +206,9 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     '#description' => $filter ? _webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
     '#weight' => $component['weight'],
     '#process' => array_merge($element_info['#process'], array('webform_multiple_file_process_element')),
+    '#theme_wrappers' => array('webform_element'),
     'webform_multiple_file_form_key' => array(
-      '#type' => 'hidden',
+      '#type' => 'value',
       '#value' => $component['form_key'],
     ),
   );
@@ -222,9 +223,9 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
         $fid = $value;
       }
     }
-    $element['#default_value'] = !empty($fid) ? array('fid' => $fid) : array();
+    $element['#default_value'] = !empty($fid) ? $fid : NULL;
     // If there's only one field, return it as delta 0.
-    if (empty($element['#default_value']['fid'])) {
+    if (empty($element['#default_value'])) {
       $element['#description'] = theme('file_upload_help', array('description' => $element['#description'], 'upload_validators' => $element['#upload_validators']));
     }
     $elements = array($element);
@@ -241,7 +242,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
         }
 
         $elements[$delta] = $element;
-        $elements[$delta]['#default_value'] = !empty($fid) ? array('fid' => $fid) : array();
+        $elements[$delta]['#default_value'] = !empty($fid) ? $fid : NULL;;
         $elements[$delta]['#weight'] = $delta;
         $delta++;
       }
@@ -258,12 +259,13 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     // after building up the full list (like draggable table rows).
     $elements['#file_upload_delta'] = $delta;
     $elements['#theme'] = 'file_widget_multiple';
-    $elements['#theme_wrappers'] = array('fieldset', 'webform_element');
+    $elements['#theme_wrappers'] = array('fieldset');
     $elements['#process'] = array('file_field_widget_process_multiple');
     $elements['#title'] = $element['#title'];
     $elements['#title_display'] = 'invisible';
     $elements['#display_field'] = 0; // Needed for theme_file_widget_multiple().
     $elements['#description'] = $element['#description'];
+    $elements['#weight'] = $component['weight'];
 
     // Add some properties that will eventually be added to the file upload
     // field. These are added here so that they may be referenced easily through
@@ -291,17 +293,19 @@ function _webform_display_multiple_file($component, $value, $format = 'html') {
    foreach ($value as $key => $fid) {
      $files[] = array(
        '#value' => $fid ? webform_get_file($fid) : NULL,
-       '#weight' => $component['weight'],
        '#theme' => 'webform_display_file',
-       '#theme_wrappers' => array('webform_display_multiple_files_set'),
+       '#theme_wrappers' => $format == 'text' ? array('webform_element_text') : array('webform_display_multiple_files_set'),
        '#format' => $format,
-       '#translatable' => array('title'),
-       '#parents' => array($key)
+       '#parents' => array($key),
+       '#webform_component' => $component,
      );
    }
+   $files['#translatable'] = array('title');
+   $files['#weight'] = $component['weight'];
    $files['#title'] = $component['name'];
    $files['#theme_wrappers'] =  $format == 'text' ? array('webform_element_text') : array('webform_element');
  }
+
  return !empty($files) ? $files : NULL;
 }
 
@@ -318,7 +322,6 @@ function _webform_delete_multiple_file($component, $value) {
     }
   }
 }
-
 
 /**
  * Implements _webform_attachments_component().
@@ -339,11 +342,11 @@ function _webform_attachments_multiple_file($component, $value) {
 
 /**
  * Implements _webform_analysis_component().
- * @todo: not correct working! Investigate & fix!
  */
 function _webform_analysis_multiple_file($component, $sids = array()) {
+  // Get submissions with uploaded multifiles.
   $query = db_select('webform_submitted_data', 'wsd', array('fetch' => PDO::FETCH_ASSOC))
-    ->fields('wsd', array('no', 'data'))
+    ->fields('wsd', array('no', 'data', 'sid'))
     ->condition('nid', $component['nid'])
     ->condition('cid', $component['cid']);
 
@@ -351,23 +354,35 @@ function _webform_analysis_multiple_file($component, $sids = array()) {
     $query->condition('sid', $sids, 'IN');
   }
 
-  $nonblanks = 0;
+  $files_count = 0;
   $sizetotal = 0;
-  $submissions = 0;
+  $submissions_with_files = array();
 
   $result = $query->execute();
   foreach ($result as $data) {
     $file = webform_get_file($data['data']);
     if (isset($file->filesize)) {
-      $nonblanks++;
+      $files_count++;
       $sizetotal += $file->filesize;
     }
-    $submissions++;
+
+    if (!in_array($data['sid'], $submissions_with_files)) {
+      $submissions_with_files[] = $data['sid'];
+    }
   }
 
-  $rows[0] = array(t('Left Blank'), ($submissions - $nonblanks));
-  $rows[1] = array(t('User uploaded file'), $nonblanks);
-  $rows[2] = array(t('Average uploaded file size'), ($sizetotal != 0 ? (int) (($sizetotal/$nonblanks)/1024) . ' KB' : '0'));
+  // Get count of submissions of current webform.
+  $total = db_select('webform_submitted_data', 'wsd', array('fetch' => PDO::FETCH_ASSOC))
+    ->fields('wsd', array('sid'))
+    ->condition('nid', $component['nid'])
+    ->groupBy('sid')
+    ->countQuery()
+    ->execute()
+    ->fetchField();
+
+  $rows[0] = array(t('Left Blank'), ($total - count($submissions_with_files)));
+  $rows[1] = array(t('User uploaded files'), $files_count);
+  $rows[2] = array(t('Average uploaded file size'), ($sizetotal != 0 ? (int) (($sizetotal/$files_count)/1024) . ' KB' : '0'));
   return $rows;
 }
 
@@ -376,12 +391,14 @@ function _webform_analysis_multiple_file($component, $sids = array()) {
  */
 function _webform_table_multiple_file($component, $value) {
   $output = '';
-  foreach ($value as $fid) {
-    $file = webform_get_file($fid);
-    if (!empty($file->fid)) {
-      $output .= '<a href="' . webform_file_url($file->uri) . '">' . check_plain(webform_file_name($file->uri)) . '</a>';
-      $output .= ' (' . (int) ($file->filesize/1024) . ' KB)';
-      $output .= "<br />\n";
+  if (!empty($value)) {
+    foreach ($value as $fid) {
+      $file = webform_get_file($fid);
+      if (!empty($file->fid)) {
+        $output .= l(check_plain(webform_file_name($file->uri)), webform_file_url($file->uri));
+        $output .= ' (' . (int) ($file->filesize/1024) . ' KB)';
+        $output .= "<br />\n";
+      }
     }
   }
 
@@ -407,15 +424,17 @@ function _webform_csv_data_multiple_file($component, $export_options, $value) {
   $files_size = 0;
   $file_urls = array();
 
-  foreach ($value as $fid) {
-    $file = webform_get_file($fid);
-    if (!empty($file->filename)) {
-      $file_urls[] = webform_file_url($file->uri);
-      $files_size += $file->filesize/1024;
+  if (!empty($value)) {
+    foreach ($value as $fid) {
+      $file = webform_get_file($fid);
+      if (!empty($file->filename)) {
+        $file_urls[] = webform_file_url($file->uri);
+        $files_size += $file->filesize/1024;
+      }
     }
   }
 
-  return empty($files_size) ? array('', '') : array(implode("\r\n", $file_urls), (int) $files_size);
+  return empty($files_size) ? array('', '') : array(implode("|", $file_urls), (int) $files_size);
 }
 
 /**
@@ -428,7 +447,6 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
   $item = $element['#value'];
   $item['fid'] = $element['fid']['#value'];
 
-  // @todo: replace function.
   $element['#theme'] = 'file_widget';
 
   // Adjust the Ajax settings so that on upload and remove of any individual
@@ -471,9 +489,8 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
  * @see file_field_widget_submit()
  */
 function webform_multiple_file_managed_file_submit($form, &$form_state) {
-  // @todo: rewrite comment
-  // During the form rebuild, file_field_widget_form() will create field item
-  // widget elements using re-indexed deltas, so clear out $form_state['input']
+  // During the form rebuild, _webform_render_multiple_file() will create file widget
+  // elements using re-indexed deltas, so clear out $form_state['input']
   // to avoid a mismatch between old and new deltas. The rebuilt elements will
   // have #default_value set appropriately for the current state of the field,
   // so nothing is lost in doing this.
