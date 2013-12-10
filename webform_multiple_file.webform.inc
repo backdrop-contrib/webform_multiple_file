@@ -444,7 +444,9 @@ function _webform_csv_data_multiple_file($component, $export_options, $value) {
 
 /**
  * Process form element callback.
+ *
  * Adds changes to managed_file element structure.
+ *
  * @see file_field_widget_process()
  */
 function webform_multiple_file_process_element($element, &$form_state, $form) {
@@ -469,9 +471,10 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
     unset($element['#prefix'], $element['#suffix']);
   }
 
-  // Add another submit handler to the upload and remove buttons, to implement
-  // functionality needed by the webform component. This submit handler, along with
-  // the rebuild logic requires the entire field, not just the individual item, to be valid.
+  // Add another submit handler to the upload and remove buttons,
+  // to implement functionality needed by the webform component.
+  // This submit handler, along with the rebuild logic requires
+  // the entire field, not just the individual item, to be valid.
   foreach (array('upload_button', 'remove_button') as $key) {
     $element[$key]['#submit'][] = 'webform_multiple_file_managed_file_submit';
     $limit_validation_errors = array(array_slice($element['#parents'], 0, -1));
@@ -482,9 +485,12 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
 }
 
 /**
+ * Form submission handler.
+ *
  * Form submission handler for upload/remove button of managed_file
  * in multiple_file webform component.
  * This runs in addition to and after file_managed_file_submit().
+ * 
  * @see file_managed_file_submit()
  * @see webform_multiple_file_process_element()
  * @see file_field_widget_submit()
