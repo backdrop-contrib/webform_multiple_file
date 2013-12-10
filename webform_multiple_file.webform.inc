@@ -95,7 +95,8 @@ function _webform_edit_multiple_file($component) {
     '#default_value' => array_intersect($current_types, $types),
   );
 
-  $types = array('txt', 'rtf', 'html', 'odf', 'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'xml');
+  $types = array('txt', 'rtf', 'html', 'odf', 'pdf',
+    'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'xml');
   $form['validation']['extensions']['types']['documents'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Documents'),
@@ -149,7 +150,8 @@ function _webform_edit_multiple_file($component) {
     '#weight' => 5,
     '#field_prefix' => 'webform/',
   );
-  $options = array(WEBFORM_MULTIPLE_FILE_CARDINALITY_UNLIMITED => t('Unlimited')) + drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+  $options = array(WEBFORM_MULTIPLE_FILE_CARDINALITY_UNLIMITED => t('Unlimited')) +
+    drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
   $form['extra']['cardinality'] = array(
     '#type' => 'select',
     '#title' => t('Number of values'),
@@ -263,7 +265,8 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     $elements['#process'] = array('file_field_widget_process_multiple');
     $elements['#title'] = $element['#title'];
     $elements['#title_display'] = 'invisible';
-    $elements['#display_field'] = 0; // Needed for theme_file_widget_multiple().
+    // #display_field is needed for theme_file_widget_multiple().
+    $elements['#display_field'] = 0;
     $elements['#description'] = $element['#description'];
     $elements['#weight'] = $component['weight'];
 
@@ -383,7 +386,7 @@ function _webform_analysis_multiple_file($component, $sids = array()) {
 
   $rows[0] = array(t('Left Blank'), ($total - count($submissions_with_files)));
   $rows[1] = array(t('User uploaded files'), $files_count);
-  $rows[2] = array(t('Average uploaded file size'), ($sizetotal != 0 ? (int) (($sizetotal/$files_count)/1024) . ' KB' : '0'));
+  $rows[2] = array(t('Average uploaded file size'), ($sizetotal != 0 ? (int) (($sizetotal / $files_count) / 1024) . ' KB' : '0'));
   return $rows;
 }
 
@@ -397,7 +400,7 @@ function _webform_table_multiple_file($component, $value) {
       $file = webform_get_file($fid);
       if (!empty($file->fid)) {
         $output .= l(check_plain(webform_file_name($file->uri)), webform_file_url($file->uri));
-        $output .= ' (' . (int) ($file->filesize/1024) . ' KB)';
+        $output .= ' (' . (int) ($file->filesize / 1024) . ' KB)';
         $output .= "<br />\n";
       }
     }
@@ -435,7 +438,9 @@ function _webform_csv_data_multiple_file($component, $export_options, $value) {
     }
   }
 
-  return empty($files_size) ? array('', '') : array(implode("|", $file_urls), (int) $files_size);
+  return empty($files_size)
+    ? array('', '')
+    : array(implode("|", $file_urls), (int) $files_size);
 }
 
 /**
