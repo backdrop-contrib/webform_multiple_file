@@ -5,5 +5,3 @@ package = Webform
 
 dependencies[] = webform
 dependencies[] = file
-
-files[] = webform_multiple_file.webform.inc

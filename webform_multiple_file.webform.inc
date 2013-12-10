@@ -249,7 +249,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     }
     // And then add one more empty row for new uploads except when this is a
     // programmed form as it is not necessary.
-    if (($component['extra']['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $delta < $component['extra']['cardinality']) && empty($form_state['programmed'])) {
+    if (($component['extra']['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $delta < $component['extra']['cardinality'])) {
       $elements[$delta] = $element;
       $elements[$delta]['#default_value'] = array();
       $elements[$delta]['#weight'] = $delta;
@@ -288,32 +288,32 @@ function _webform_submit_multiple_file($component, $value) {
  * Implements _webform_display_component().
  */
 function _webform_display_multiple_file($component, $value, $format = 'html') {
- if (!empty($value)) {
-   $files = array();
-   foreach ($value as $key => $fid) {
-     $files[] = array(
-       '#value' => $fid ? webform_get_file($fid) : NULL,
-       '#theme' => 'webform_display_file',
-       '#theme_wrappers' => $format == 'text' ? array('webform_element_text') : array('webform_display_multiple_files_set'),
-       '#format' => $format,
-       '#parents' => array($key),
-       '#webform_component' => $component,
-     );
-   }
-   $files['#translatable'] = array('title');
-   $files['#weight'] = $component['weight'];
-   $files['#title'] = $component['name'];
-   $files['#theme_wrappers'] =  $format == 'text' ? array('webform_element_text') : array('webform_element');
- }
+  if (!empty($value)) {
+    $files = array();
+    foreach ($value as $key => $fid) {
+      $files[] = array(
+        '#value' => $fid ? webform_get_file($fid) : NULL,
+        '#theme' => 'webform_display_file',
+        '#theme_wrappers' => $format == 'text' ? array('webform_element_text') : array('webform_display_multiple_files_set'),
+        '#format' => $format,
+        '#parents' => array($key),
+        '#webform_component' => $component,
+      );
+    }
+    $files['#translatable'] = array('title');
+    $files['#weight'] = $component['weight'];
+    $files['#title'] = $component['name'];
+    $files['#theme_wrappers'] = $format == 'text' ? array('webform_element_text') : array('webform_element');
+  }
 
- return !empty($files) ? $files : NULL;
+  return !empty($files) ? $files : NULL;
 }
 
 /**
  * Implements _webform_delete_component().
  */
 function _webform_delete_multiple_file($component, $value) {
-  if(!empty($value)) {
+  if (!empty($value)) {
     foreach ($value as $fid) {
       if (!empty($fid) && ($file = webform_get_file($fid))) {
         file_usage_delete($file, 'webform');
@@ -331,7 +331,8 @@ function _webform_attachments_multiple_file($component, $value) {
   foreach ($value as $fid) {
     $file = (array) webform_get_file($fid);
     if (!empty($file)) {
-      //This is necessary until the next release of mimemail is out, see [#1388786]
+      // This is necessary until the next release of mimemail is out,
+      // see [#1388786].
       $file['filepath'] = $file['uri'];
       $files[] = $file;
     }
@@ -441,11 +442,9 @@ function _webform_csv_data_multiple_file($component, $export_options, $value) {
  * Process form element callback.
  * Adds changes to managed_file element structure.
  *
- * @see file_field_widget_process().
+ * @see file_field_widget_process()
  */
 function webform_multiple_file_process_element($element, &$form_state, $form) {
-  $item = $element['#value'];
-  $item['fid'] = $element['fid']['#value'];
 
   $element['#theme'] = 'file_widget';
 
@@ -479,9 +478,7 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
 }
 
 /**
- * Form submission handler for upload/remove button of managed_file
- * in multiple_file webform component.
- *
+ * Form submission handler for upload/remove button of managed_file in multiple_file webform component.
  * This runs in addition to and after file_managed_file_submit().
  *
  * @see file_managed_file_submit()

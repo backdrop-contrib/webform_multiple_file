@@ -11,7 +11,7 @@
 define('WEBFORM_MULTIPLE_FILE_CARDINALITY_UNLIMITED', -1);
 
 /**
- * Implementation of hook_webform_component_info().
+ * Implements hook_webform_component_info().
  */
 function webform_multiple_file_webform_component_info() {
   $components = array();
@@ -34,7 +34,7 @@ function webform_multiple_file_webform_component_info() {
 /**
  * Implements hook_webform_submission_presave().
  *
- * @see webform_webform_submission_presave().
+ * @see webform_webform_submission_presave()
  */
 function webform_multiple_file_webform_submission_presave($node, &$submission) {
   $has_file_components = FALSE;
@@ -70,7 +70,7 @@ function webform_multiple_file_webform_submission_presave($node, &$submission) {
       // Diff the old against new to determine what files were deleted.
       'deleted_fids' => array_diff($old_fids, $new_fids),
       // Diff the new files against old to determine new uploads.
-      'added_fids' => array_diff($new_fids, $old_fids)
+      'added_fids' => array_diff($new_fids, $old_fids),
     );
   }
 }
