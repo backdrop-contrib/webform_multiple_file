@@ -496,11 +496,11 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
  * @see file_field_widget_submit()
  */
 function webform_multiple_file_managed_file_submit($form, &$form_state) {
-  // During the form rebuild, _webform_render_multiple_file() will create file widget
-  // elements using re-indexed deltas, so clear out $form_state['input']
-  // to avoid a mismatch between old and new deltas. The rebuilt elements will
-  // have #default_value set appropriately for the current state of the field,
-  // so nothing is lost in doing this.
+  // During the form rebuild, _webform_render_multiple_file() will create
+  // file widget elements using re-indexed deltas, so clear out
+  // $form_state['input'] to avoid a mismatch between old and new deltas.
+  // The rebuilt elements will have #default_value set appropriately
+  // for the current state of the field, so nothing is lost in doing this.
   $parents = array_slice($form_state['triggering_element']['#parents'], 0, -2);
   drupal_array_set_nested_value($form_state['input'], $parents, NULL);
 
