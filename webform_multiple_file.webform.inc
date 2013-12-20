@@ -6,7 +6,9 @@
  */
 
 /**
- * Implements _webform_defaults_component().
+ * Describes multiple_file component.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_defaults_multiple_file() {
   return array(
@@ -33,7 +35,9 @@ function _webform_defaults_multiple_file() {
 }
 
 /**
- * Implements _webform_theme_component().
+ * Sets theme function for multiple_file component.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_theme_multiple_file() {
   return array(
@@ -45,7 +49,9 @@ function _webform_theme_multiple_file() {
 
 
 /**
- * Implements _webform_edit_component().
+ * Settings form for multiple_file component.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_edit_multiple_file($component) {
   $form = array();
@@ -76,7 +82,7 @@ function _webform_edit_multiple_file($component) {
     '#weight' => 2,
   );
 
-  // Find the list of all currently valid extensions.
+  // List of all currently valid extensions.
   $current_types = isset($component['extra']['filtering']['types']) ? $component['extra']['filtering']['types'] : array();
 
   $types = array('gif', 'jpg', 'png');
@@ -178,7 +184,11 @@ function _webform_edit_multiple_file($component) {
 }
 
 /**
- * Implements _webform_render_component().
+ * Render the multiple_file component.
+ *
+ * Works similar to file field widget.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE) {
   $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
@@ -249,30 +259,27 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
         $delta++;
       }
     }
-    // And then add one more empty row for new uploads except when this is a
-    // programmed form as it is not necessary.
+
+    // Adds one more empty row for new file uploads.
     if (($component['extra']['cardinality'] == FIELD_CARDINALITY_UNLIMITED || $delta < $component['extra']['cardinality'])) {
       $elements[$delta] = $element;
       $elements[$delta]['#default_value'] = array();
       $elements[$delta]['#weight'] = $delta;
     }
 
-    // The group of elements all-together need some extra functionality
-    // after building up the full list (like draggable table rows).
+    // Extra functionality for the group of elements.
     $elements['#file_upload_delta'] = $delta;
     $elements['#theme'] = 'file_widget_multiple';
     $elements['#theme_wrappers'] = array('fieldset');
     $elements['#process'] = array('file_field_widget_process_multiple');
     $elements['#title'] = $element['#title'];
     $elements['#title_display'] = 'invisible';
-    // #display_field is needed for theme_file_widget_multiple().
     $elements['#display_field'] = 0;
     $elements['#description'] = $element['#description'];
     $elements['#weight'] = $component['weight'];
 
-    // Add some properties that will eventually be added to the file upload
-    // field. These are added here so that they may be referenced easily through
-    // a hook_form_alter().
+    // Add some properties that will eventually be added to the
+    // file upload field.
     $elements['#file_upload_title'] = t('Add a new file');
     $elements['#file_upload_description'] = theme('file_upload_help', array('description' => '', 'upload_validators' => $elements[0]['#upload_validators']));
   }
@@ -281,14 +288,18 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
 }
 
 /**
- * Implements _webform_submit_component().
+ * Submit value of multiple_file component.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_submit_multiple_file($component, $value) {
   return array_filter($value);
 }
 
 /**
- * Implements _webform_display_component().
+ * Displays uploaded files through multiple_file component.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_display_multiple_file($component, $value, $format = 'html') {
   if (!empty($value)) {
@@ -313,7 +324,9 @@ function _webform_display_multiple_file($component, $value, $format = 'html') {
 }
 
 /**
- * Implements _webform_delete_component().
+ * Describes delete process of multiple_file component.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_delete_multiple_file($component, $value) {
   if (!empty($value)) {
@@ -327,8 +340,9 @@ function _webform_delete_multiple_file($component, $value) {
 }
 
 /**
- * Implements _webform_attachments_component().
- * @todo: not tested!
+ * Attaches multiple_file component data to mail.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_attachments_multiple_file($component, $value) {
   foreach ($value as $fid) {
@@ -345,7 +359,9 @@ function _webform_attachments_multiple_file($component, $value) {
 }
 
 /**
- * Implements _webform_analysis_component().
+ * Processing multiple_file data for analysis page.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_analysis_multiple_file($component, $sids = array()) {
   // Get submissions with uploaded multifiles.
@@ -391,7 +407,9 @@ function _webform_analysis_multiple_file($component, $sids = array()) {
 }
 
 /**
- * Implements _webform_table_component().
+ * Provides multiple_file data for results webform table.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_table_multiple_file($component, $value) {
   $output = '';
@@ -410,7 +428,9 @@ function _webform_table_multiple_file($component, $value) {
 }
 
 /**
- * Implements _webform_csv_headers_component().
+ * Configuration of CSV headers for multiple_file data export.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_csv_headers_multiple_file($component, $export_options) {
   $header = array();
@@ -422,7 +442,9 @@ function _webform_csv_headers_multiple_file($component, $export_options) {
 }
 
 /**
- * Implements _webform_csv_data_component().
+ * Processing multiple_file data for CSV export.
+ *
+ * @see webform_component_invoke()
  */
 function _webform_csv_data_multiple_file($component, $export_options, $value) {
   $files_size = 0;
@@ -453,8 +475,8 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
 
   $element['#theme'] = 'file_widget';
 
-  // Adjust the Ajax settings so that on upload and remove of any individual
-  // file, the entire group of file fields is updated together.
+  // Ajax settings to upload and remove of any individual file
+  // and update group of already uploaded files.
   $form_key = $element['webform_multiple_file_form_key']['#value'];
   $cardinality = $form['submitted'][$form_key]['#webform_component']['extra']['cardinality'];
   if ($cardinality != 1) {
@@ -473,8 +495,6 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
 
   // Add another submit handler to the upload and remove buttons,
   // to implement functionality needed by the webform component.
-  // This submit handler, along with the rebuild logic requires
-  // the entire field, not just the individual item, to be valid.
   foreach (array('upload_button', 'remove_button') as $key) {
     $element[$key]['#submit'][] = 'webform_multiple_file_managed_file_submit';
     $limit_validation_errors = array(array_slice($element['#parents'], 0, -1));
@@ -497,7 +517,7 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
  */
 function webform_multiple_file_managed_file_submit($form, &$form_state) {
   // During the form rebuild, _webform_render_multiple_file() will create
-  // file widget elements using re-indexed deltas, so clear out
+  // file elements using re-indexed deltas, so clear out
   // $form_state['input'] to avoid a mismatch between old and new deltas.
   // The rebuilt elements will have #default_value set appropriately
   // for the current state of the field, so nothing is lost in doing this.
