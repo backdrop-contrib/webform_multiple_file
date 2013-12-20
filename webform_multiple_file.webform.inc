@@ -417,7 +417,7 @@ function _webform_table_multiple_file($component, $value) {
     foreach ($value as $fid) {
       $file = webform_get_file($fid);
       if (!empty($file->fid)) {
-        $output .= l(check_plain(webform_file_name($file->uri)), webform_file_url($file->uri));
+        $output .= l(webform_file_name($file->uri), webform_file_url($file->uri));
         $output .= ' (' . (int) ($file->filesize / 1024) . ' KB)';
         $output .= "<br />\n";
       }
