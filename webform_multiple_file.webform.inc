@@ -203,7 +203,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
   $element_info = element_info('managed_file');
   $element = array(
     '#type' => 'managed_file',
-    '#title' => $filter ? _webform_filter_xss($component['name']) : $component['name'],
+    '#title' => $filter ? webform_filter_xss($component['name']) : $component['name'],
     '#title_display' => $component['extra']['title_display'] ? $component['extra']['title_display'] : 'before',
     '#required' => empty($value) ? $component['mandatory'] : FALSE,
     '#default_value' => isset($value[0]) ? $value[0] : NULL,
@@ -215,7 +215,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     '#pre_render' => array_merge(element_info_property('managed_file', '#pre_render'), array('webform_file_allow_access')),
     '#upload_location' => $component['extra']['scheme'] . '://webform/' . $component['extra']['directory'],
     '#progress_indicator' => $component['extra']['progress_indicator'],
-    '#description' => $filter ? _webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
+    '#description' => $filter ? webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
     '#weight' => $component['weight'],
     '#process' => array_merge($element_info['#process'], array('webform_multiple_file_process_element')),
     '#theme_wrappers' => array('webform_element'),

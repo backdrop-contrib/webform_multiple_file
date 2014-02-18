@@ -3,5 +3,5 @@ description = Adds a new component to webform to allow multiple file uploads.
 core = 7.x
 package = Webform
 
-dependencies[] = webform
+dependencies[] = webform (4.x)
 dependencies[] = file
