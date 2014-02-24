@@ -219,7 +219,8 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     '#weight' => $component['weight'],
     '#process' => array_merge($element_info['#process'], array('webform_multiple_file_process_element')),
     '#theme_wrappers' => array('webform_element'),
-    'webform_multiple_file_form_key' => array(
+    '#webform_component' => $component,
+    '#webform_multiple_file_form_key' => array(
       '#type' => 'value',
       '#value' => $component['form_key'],
     ),
@@ -362,6 +363,7 @@ function _webform_attachments_multiple_file($component, $value) {
  * Processing multiple_file data for analysis page.
  *
  * @see webform_component_invoke()
+ * @todo: seems to be not working with webform 4.x
  */
 function _webform_analysis_multiple_file($component, $sids = array()) {
   // Get submissions with uploaded multifiles.
@@ -477,7 +479,7 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
 
   // Ajax settings to upload and remove of any individual file
   // and update group of already uploaded files.
-  $form_key = $element['webform_multiple_file_form_key']['#value'];
+  $form_key = $element['#webform_multiple_file_form_key']['#value'];
   $cardinality = $form['submitted'][$form_key]['#webform_component']['extra']['cardinality'];
   if ($cardinality != 1) {
     $parents = array_slice($element['#array_parents'], 0, -1);
