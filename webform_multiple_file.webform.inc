@@ -525,19 +525,26 @@ function webform_multiple_file_managed_file_submit($form, &$form_state) {
   drupal_array_set_nested_value($form_state['input'], $parents, NULL);
 
   $button = $form_state['triggering_element'];
+  $form_key = $button['#array_parents'][1];
 
-  $submitted_values = drupal_array_get_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -2));
-  foreach ($submitted_values as $delta => $submitted_value) {
+  // All submitted values.
+  $submitted_values = drupal_array_get_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -3));
+
+  // Processes values only for multiple files component.
+  $component_values = isset($submitted_values[$form_key]) ? $submitted_values[$form_key] : array();
+  foreach ($component_values as $delta => $submitted_value) {
     if (!$submitted_value['fid']) {
-      unset($submitted_values[$delta]);
+      unset($component_values[$delta]);
     }
   }
 
   // Re-index deltas after removing empty items.
-  $submitted_values = array_values($submitted_values);
+  $submitted_values[$form_key] = array_values($component_values);
+  // Changes key from 'form_key' to 'cid' of webform component.
+  $flatten_values = _webform_client_form_submit_flatten($form['#node'], $submitted_values);
 
   // Update form_state values.
-  drupal_array_set_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -2), $submitted_values);
+  drupal_array_set_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -3), $flatten_values);
 }
 
 /**
