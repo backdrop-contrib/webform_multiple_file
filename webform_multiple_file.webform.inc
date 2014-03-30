@@ -233,7 +233,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
         $fid = $value[0]['fid'];
       }
       else {
-        $fid = $value;
+        $fid = $value[0];
       }
     }
     $element['#default_value'] = !empty($fid) ? $fid : NULL;
@@ -546,7 +546,17 @@ function webform_multiple_file_managed_file_submit($form, &$form_state) {
   $flatten_values = _webform_client_form_submit_flatten($form['#node'], $submitted_values);
 
   // Update form_state values.
-  drupal_array_set_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -3), $flatten_values);
+  $parents = array_slice($button['#array_parents'], 0, -3);
+  drupal_array_set_nested_value($form_state['values'], $parents, $flatten_values);
+
+  // Adds values to $form_state['storage'] to prevent missing values during another element AJAX-submit.
+  $form_state['storage'] = isset($form_state['storage']) ? $form_state['storage'] : array();
+  $storage_values = drupal_array_get_nested_value($form_state['storage'], $parents);
+  $storage_values = isset($storage_values) ? $storage_values : array();
+  foreach ($flatten_values as $cid => $value) {
+    $storage_values[$cid] = $value;
+  }
+  drupal_array_set_nested_value($form_state['storage'], $parents, $storage_values);
 }
 
 /**
