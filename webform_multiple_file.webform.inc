@@ -479,10 +479,10 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
 
   // Ajax settings to upload and remove of any individual file
   // and update group of already uploaded files.
-  $form_key = $element['#webform_multiple_file_form_key']['#value'];
-  $cardinality = $form['submitted'][$form_key]['#webform_component']['extra']['cardinality'];
+  $parents = array_slice($element['#array_parents'], 0, -1);
+  $cardinality = drupal_array_get_nested_value($form,
+    array_merge($parents, array('#webform_component', 'extra', 'cardinality')));
   if ($cardinality != 1) {
-    $parents = array_slice($element['#array_parents'], 0, -1);
     $new_path = 'file/ajax/' . implode('/', $parents) . '/' . $form['form_build_id']['#value'];
     $component_element = drupal_array_get_nested_value($form, $parents);
     $new_wrapper = $component_element['#id'] . '-ajax-wrapper';
