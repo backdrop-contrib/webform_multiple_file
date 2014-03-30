@@ -363,7 +363,6 @@ function _webform_attachments_multiple_file($component, $value) {
  * Processing multiple_file data for analysis page.
  *
  * @see webform_component_invoke()
- * @todo: seems to be not working with webform 4.x
  */
 function _webform_analysis_multiple_file($component, $sids = array()) {
   // Get submissions with uploaded multifiles.
@@ -404,8 +403,11 @@ function _webform_analysis_multiple_file($component, $sids = array()) {
 
   $rows[0] = array(t('Left Blank'), ($total - count($submissions_with_files)));
   $rows[1] = array(t('User uploaded files'), $files_count);
-  $rows[2] = array(t('Average uploaded file size'), ($sizetotal != 0 ? (int) (($sizetotal / $files_count) / 1024) . ' KB' : '0'));
-  return $rows;
+  $other[0] = array(t('Average uploaded file size'), ($sizetotal != 0 ? (int) (($sizetotal / $files_count) / 1024) . ' KB' : '0'));
+  return array(
+    'table_rows' => $rows,
+    'other_data' => $other,
+  );
 }
 
 /**
