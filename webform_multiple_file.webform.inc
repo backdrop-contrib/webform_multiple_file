@@ -537,7 +537,7 @@ function webform_multiple_file_managed_file_submit($form, &$form_state) {
   // Processes values only for multiple files component.
   $component_values = isset($submitted_values[$form_key]) ? $submitted_values[$form_key] : array();
   foreach ($component_values as $delta => $submitted_value) {
-    if (!$submitted_value['fid']) {
+    if (empty($submitted_value) || (is_array($submitted_value) &&  empty($submitted_value['fid']))) {
       unset($component_values[$delta]);
     }
   }
