@@ -525,11 +525,15 @@ function webform_multiple_file_managed_file_submit($form, &$form_state) {
   // $form_state['input'] to avoid a mismatch between old and new deltas.
   // The rebuilt elements will have #default_value set appropriately
   // for the current state of the field, so nothing is lost in doing this.
-  $parents = array_slice($form_state['triggering_element']['#parents'], 0, -2);
+  $button = $form_state['triggering_element'];
+  $parents = array_slice($button['#parents'], 0, -2);
+
+  // Reset input values.
   drupal_array_set_nested_value($form_state['input'], $parents, NULL);
 
-  $button = $form_state['triggering_element'];
-  $form_key = $button['#array_parents'][1];
+  // Webform component info.
+  $component = drupal_array_get_nested_value($form, array_merge($parents, array('#webform_component')));
+  $form_key = $component['form_key'];
 
   // All submitted values.
   $submitted_values = drupal_array_get_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -3));
@@ -544,11 +548,15 @@ function webform_multiple_file_managed_file_submit($form, &$form_state) {
 
   // Re-index deltas after removing empty items.
   $submitted_values[$form_key] = array_values($component_values);
+  // Retrieve parent ID for Webform component.
+  $pid = $component['pid'];
   // Changes key from 'form_key' to 'cid' of webform component.
-  $flatten_values = _webform_client_form_submit_flatten($form['#node'], $submitted_values);
+  $flatten_values = _webform_client_form_submit_flatten($form['#node'], $submitted_values, $pid);
 
+  // Key 'submitted' is used in Webform module as constant all over the code.
+  // Seems that is correct to use this key.
+  $parents = array('submitted');
   // Update form_state values.
-  $parents = array_slice($button['#array_parents'], 0, -3);
   drupal_array_set_nested_value($form_state['values'], $parents, $flatten_values);
 
   // Adds values to $form_state['storage'] to prevent missing values during another element AJAX-submit.
