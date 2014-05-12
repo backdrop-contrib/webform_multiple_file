@@ -44,8 +44,13 @@ function webform_multiple_file_webform_submission_presave($node, &$submission) {
   foreach ($node->webform['components'] as $cid => $component) {
     if ($component['type'] == 'multiple_file') {
       $has_file_components = TRUE;
-      if (!empty($submission->data[$cid]['value'])) {
-        $new_fids = array_merge($new_fids, $submission->data[$cid]['value']);
+      if (!empty($submission->data[$cid])) {
+        foreach ($submission->data[$cid] as $key => $value) {
+          if (empty($value)) {
+            unset($submission->data[$cid][$key]);
+          }
+        }
+        $new_fids = array_merge($new_fids, $submission->data[$cid]);
       }
     }
   }
@@ -53,12 +58,13 @@ function webform_multiple_file_webform_submission_presave($node, &$submission) {
   if ($has_file_components) {
     // If we're updating a submission, build a list of previous files.
     if (isset($submission->sid)) {
-      $old_submission = webform_get_submission($node->nid, $submission->sid, TRUE);
+      drupal_static_reset('webform_get_submission');
+      $old_submission = webform_get_submission($node->nid, $submission->sid);
 
       foreach ($node->webform['components'] as $cid => $component) {
         if ($component['type'] == 'multiple_file') {
-          if (!empty($old_submission->data[$cid]['value'])) {
-            $old_fids = array_merge($old_fids, $old_submission->data[$cid]['value']);
+          if (!empty($old_submission->data[$cid])) {
+            $old_fids = array_merge($old_fids, $old_submission->data[$cid]);
           }
         }
       }
@@ -66,11 +72,12 @@ function webform_multiple_file_webform_submission_presave($node, &$submission) {
 
     // Save the list of added or removed files so we can add usage in
     // hook_webform_submission_insert() or _update().
+    // Also we should keep $submission->file_usage values from previous hook implementations.
+    $deleted_fids =  isset($submission->file_usage['deleted_fids']) ? $submission->file_usage['deleted_fids'] : array();
+    $added_fids =  isset($submission->file_usage['added_fids']) ? $submission->file_usage['added_fids'] : array();
     $submission->file_usage = array(
-      // Diff the old against new to determine what files were deleted.
-      'deleted_fids' => array_diff($old_fids, $new_fids),
-      // Diff the new files against old to determine new uploads.
-      'added_fids' => array_diff($new_fids, $old_fids),
+      'deleted_fids' => array_merge($deleted_fids, array_diff($old_fids, $new_fids)),
+      'added_fids' =>  array_merge($added_fids, array_diff($new_fids, $old_fids)),
     );
   }
 }
