@@ -26,7 +26,7 @@ function _webform_defaults_multiple_file() {
       'scheme' => 'public',
       'directory' => '',
       'progress_indicator' => 'throbber',
-      'title_display' => 0,
+      'title_display' => 'none',
       'description' => '',
       'attributes' => array(),
       'private' => FALSE,
@@ -218,7 +218,6 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     '#description' => $filter ? webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
     '#weight' => $component['weight'],
     '#process' => array_merge($element_info['#process'], array('webform_multiple_file_process_element')),
-    '#theme_wrappers' => array('webform_element'),
     '#webform_component' => $component,
     '#webform_multiple_file_form_key' => array(
       '#type' => 'value',
@@ -271,10 +270,10 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     // Extra functionality for the group of elements.
     $elements['#file_upload_delta'] = $delta;
     $elements['#theme'] = 'file_widget_multiple';
-    $elements['#theme_wrappers'] = array('fieldset');
+    $elements['#theme_wrappers'] = array('fieldset', 'webform_element');
     $elements['#process'] = array('file_field_widget_process_multiple');
     $elements['#title'] = $element['#title'];
-    $elements['#title_display'] = 'invisible';
+    $elements['#title_display'] = 'none';
     $elements['#display_field'] = 0;
     $elements['#description'] = $element['#description'];
     $elements['#weight'] = $component['weight'];
@@ -294,7 +293,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
  * @see webform_component_invoke()
  */
 function _webform_submit_multiple_file($component, $value) {
-  return array_filter($value);
+  return isset($value) ? array_filter($value) : array();
 }
 
 /**
