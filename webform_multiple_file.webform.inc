@@ -294,7 +294,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
  * @see webform_component_invoke()
  */
 function _webform_submit_multiple_file($component, $value) {
-  return array_filter($value);
+  return isset($value) ? array_filter($value) : NULL;
 }
 
 /**
