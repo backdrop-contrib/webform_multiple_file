@@ -26,7 +26,7 @@ function _webform_defaults_multiple_file() {
       'scheme' => 'public',
       'directory' => '',
       'progress_indicator' => 'throbber',
-      'title_display' => 'none',
+      'title_display' => 0,
       'description' => '',
       'attributes' => array(),
       'private' => FALSE,
@@ -218,6 +218,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     '#description' => $filter ? webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
     '#weight' => $component['weight'],
     '#process' => array_merge($element_info['#process'], array('webform_multiple_file_process_element')),
+    '#theme_wrappers' => array('webform_element'),
     '#webform_component' => $component,
     '#webform_multiple_file_form_key' => array(
       '#type' => 'value',
@@ -270,10 +271,10 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     // Extra functionality for the group of elements.
     $elements['#file_upload_delta'] = $delta;
     $elements['#theme'] = 'file_widget_multiple';
-    $elements['#theme_wrappers'] = array('fieldset', 'webform_element');
+    $elements['#theme_wrappers'] = array('fieldset');
     $elements['#process'] = array('file_field_widget_process_multiple');
     $elements['#title'] = $element['#title'];
-    $elements['#title_display'] = 'none';
+    $elements['#title_display'] = 'invisible';
     $elements['#display_field'] = 0;
     $elements['#description'] = $element['#description'];
     $elements['#weight'] = $component['weight'];
@@ -293,7 +294,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
  * @see webform_component_invoke()
  */
 function _webform_submit_multiple_file($component, $value) {
-  return isset($value) ? array_filter($value) : array();
+  return array_filter($value);
 }
 
 /**
@@ -314,6 +315,21 @@ function _webform_display_multiple_file($component, $value, $format = 'html') {
         '#webform_component' => $component,
       );
     }
+    $files['#translatable'] = array('title');
+    $files['#weight'] = $component['weight'];
+    $files['#title'] = $component['name'];
+    $files['#theme_wrappers'] = $format == 'text' ? array('webform_element_text') : array('webform_element');
+  }
+  else{
+    $files = array();
+    $files[] = array(
+      '#value' => NULL,
+      '#theme' => 'webform_display_file',
+      '#theme_wrappers' => $format == 'text' ? array('webform_element_text') : array('webform_display_multiple_files_set'),
+      '#format' => $format,
+      '#parents' => NULL,
+      '#webform_component' => $component,
+    );
     $files['#translatable'] = array('title');
     $files['#weight'] = $component['weight'];
     $files['#title'] = $component['name'];
