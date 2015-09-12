@@ -22,7 +22,7 @@ function webform_multiple_file_webform_component_info() {
     'label' => t('Multiple file'),
     'description' => t('Multiple file upload support for webform.'),
     'features' => array(
-      'conditional' => TRUE,
+      'conditional' => FALSE,
       'attachment' => TRUE,
     ),
     'file' => 'webform_multiple_file.webform.inc',
