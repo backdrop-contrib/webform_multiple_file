@@ -278,6 +278,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     $elements['#display_field'] = 0;
     $elements['#description'] = $element['#description'];
     $elements['#weight'] = $component['weight'];
+    $elements['#attributes']['class'][] = 'webform-component--' . $component['form_key'];
 
     // Add some properties that will eventually be added to the
     // file upload field.
