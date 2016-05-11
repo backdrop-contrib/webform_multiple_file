@@ -40,6 +40,7 @@ function webform_multiple_file_webform_submission_presave($node, &$submission) {
   $has_file_components = FALSE;
   $new_fids = array();
   $old_fids = array();
+  $renameable = array();
 
   foreach ($node->webform['components'] as $cid => $component) {
     if ($component['type'] == 'multiple_file') {
@@ -48,6 +49,9 @@ function webform_multiple_file_webform_submission_presave($node, &$submission) {
         foreach ($submission->data[$cid] as $key => $value) {
           if (empty($value)) {
             unset($submission->data[$cid][$key]);
+          }
+          if (strlen($component['extra']['rename'])) {
+            $renameable[$cid][] = $value;
           }
         }
         $new_fids = array_merge($new_fids, $submission->data[$cid]);
@@ -70,16 +74,20 @@ function webform_multiple_file_webform_submission_presave($node, &$submission) {
       }
     }
 
+    // Only rename files if this is the first time the submission is being saved as finished.
+    if ($submission->is_draft || (isset($old_submission) && !$old_submission->is_draft)) {
+      $renameable = array();
+    }
     // Save the list of added or removed files so we can add usage in
     // hook_webform_submission_insert() or _update().
     // Also we should keep $submission->file_usage values from previous hook implementations.
     $deleted_fids =  isset($submission->file_usage['deleted_fids']) ? $submission->file_usage['deleted_fids'] : array();
     $added_fids =  isset($submission->file_usage['added_fids']) ? $submission->file_usage['added_fids'] : array();
-    $renameable = isset($submission->file_usage['renameable']) ? $submission->file_usage['renameable'] : array();
+    $previous_renameable = isset($submission->file_usage['renameable']) ? $submission->file_usage['renameable'] : array();
     $submission->file_usage = array(
       'deleted_fids' => array_merge($deleted_fids, array_diff($old_fids, $new_fids)),
       'added_fids' =>  array_merge($added_fids, array_diff($new_fids, $old_fids)),
-      'renameable' => $renameable,
+      'renameable' => $previous_renameable + $renameable,
     );
   }
 }

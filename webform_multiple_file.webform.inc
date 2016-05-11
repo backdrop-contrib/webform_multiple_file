@@ -25,6 +25,7 @@ function _webform_defaults_multiple_file() {
       ),
       'scheme' => 'public',
       'directory' => '',
+      'rename' => '',
       'progress_indicator' => 'throbber',
       'title_display' => 0,
       'description' => '',
@@ -156,6 +157,15 @@ function _webform_edit_multiple_file($component) {
     '#weight' => 5,
     '#field_prefix' => 'webform/',
   );
+  $form['extra']['rename'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Rename files'),
+    '#default_value' => $component['extra']['rename'],
+    '#description' => t('You may optionally use tokens to create a pattern used to rename files upon submission. Omit the extension; it will be added automatically.') . ' ' . theme('webform_token_help', array('groups' => array('node', 'submission'))),
+    '#weight' => 6,
+    '#element_validate' => array('_webform_edit_multiple_file_rename_validate'),
+    '#access' => webform_variable_get('webform_token_access'),
+  );
   $options = array(WEBFORM_MULTIPLE_FILE_CARDINALITY_UNLIMITED => t('Unlimited')) +
     drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
   $form['extra']['cardinality'] = array(
@@ -181,6 +191,20 @@ function _webform_edit_multiple_file($component) {
   );
 
   return $form;
+}
+
+/**
+ * Form validation callback.
+ *
+ * A Form API element validate function to ensure that the rename string is
+ * either empty or contains at least one token.
+ */
+function _webform_edit_multiple_file_rename_validate($element, &$form_state, $form) {
+  $rename = trim($form_state['values']['extra']['rename']);
+  form_set_value($element, $rename, $form_state);
+  if (strlen($rename) && !count(token_scan($rename))) {
+    form_error($element, t('To create unique file names, use at least one token in the file name pattern.'));
+  }
 }
 
 /**
