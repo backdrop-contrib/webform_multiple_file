@@ -153,7 +153,7 @@ function _webform_edit_multiple_file($component) {
     '#type' => 'textfield',
     '#title' => t('Upload directory'),
     '#default_value' => $component['extra']['directory'],
-    '#description' => t('You may optionally specify a sub-directory to store your files.'),
+    '#description' => t('You may optionally specify a sub-directory to store your files.') . ' ' . theme('webform_token_help'),
     '#weight' => 5,
     '#field_prefix' => 'webform/',
   );
@@ -237,7 +237,9 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
       'file_validate_extensions' => array(implode(' ', $component['extra']['filtering']['types'])),
     ),
     '#pre_render' => array_merge(element_info_property('managed_file', '#pre_render'), array('webform_file_allow_access')),
-    '#upload_location' => $component['extra']['scheme'] . '://webform/' . $component['extra']['directory'],
+    '#upload_location' => $component['extra']['scheme'] . '://webform/' . ($filter
+        ? drupal_strtolower(webform_replace_tokens($component['extra']['directory'], $node))
+        : $component['extra']['directory']),
     '#progress_indicator' => $component['extra']['progress_indicator'],
     '#description' => $filter ? webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
     '#weight' => $component['weight'],
@@ -554,7 +556,7 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
  * Form submission handler for upload/remove button of managed_file
  * in multiple_file webform component.
  * This runs in addition to and after file_managed_file_submit().
- * 
+ *
  * @see file_managed_file_submit()
  * @see webform_multiple_file_process_element()
  * @see file_field_widget_submit()
