@@ -310,6 +310,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     // file upload field.
     $elements['#file_upload_title'] = t('Add a new file');
     $elements['#file_upload_description'] = theme('file_upload_help', array('description' => '', 'upload_validators' => $elements[0]['#upload_validators']));
+    $elements['#translatable'] = array('title', 'description');
   }
 
   return $elements;
