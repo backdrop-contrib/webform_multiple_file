@@ -31,6 +31,7 @@ function _webform_defaults_multiple_file() {
       'description' => '',
       'attributes' => array(),
       'private' => FALSE,
+      'wrapper' => 'fieldset',
     ),
   );
 }
@@ -190,6 +191,19 @@ function _webform_edit_multiple_file($component) {
     '#parents' => array('extra', 'progress_indicator'),
   );
 
+  $form['display']['wrapper'] = array(
+    '#type' => 'select',
+    '#title' => t('Wrapper'),
+    '#options' => array(
+      'fieldset' => t('Fieldset (with heading)'),
+      'container' => t('Container (without heading)'),
+    ),
+    '#default_value' => isset($component['extra']['wrapper']) ? $component['extra']['wrapper'] : 'fieldset',
+    '#description' => t('Form item wrapper type.'),
+    '#parents' => array('extra', 'wrapper'),
+    '#weight' => 20,
+  );
+
   return $form;
 }
 
@@ -297,7 +311,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     // Extra functionality for the group of elements.
     $elements['#file_upload_delta'] = $delta;
     $elements['#theme'] = 'file_widget_multiple';
-    $elements['#theme_wrappers'] = array('fieldset');
+    $elements['#theme_wrappers'] = array(isset($component['extra']['wrapper']) ? $component['extra']['wrapper'] : 'fieldset');
     $elements['#process'] = array('file_field_widget_process_multiple');
     $elements['#title'] = $element['#title'];
     $elements['#title_display'] = 'invisible';
