@@ -402,7 +402,7 @@ function _webform_delete_multiple_file($component, $value) {
     foreach ($value as $fid) {
       if (!empty($fid) && ($file = webform_get_file($fid))) {
         file_usage_delete($file, 'webform');
-        file_delete($file);
+        file_delete($file->fid);
       }
     }
   }
