@@ -78,8 +78,8 @@ function _webform_edit_multiple_file($component) {
     '#theme_wrappers' => array('form_element'),
     '#title' => t('Allowed file extensions'),
     '#attached' => array(
-      'js' => array(drupal_get_path('module', 'webform') . '/js/webform-admin.js'),
-      'css' => array(drupal_get_path('module', 'webform') . '/css/webform-admin.css'),
+      'js' => array(backdrop_get_path('module', 'webform') . '/js/webform-admin.js'),
+      'css' => array(backdrop_get_path('module', 'webform') . '/css/webform-admin.css'),
     ),
     '#weight' => 2,
   );
@@ -91,7 +91,7 @@ function _webform_edit_multiple_file($component) {
   $form['validation']['extensions']['types']['webimages'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Web images'),
-    '#options' => drupal_map_assoc($types),
+    '#options' => backdrop_map_assoc($types),
     '#default_value' => array_intersect($current_types, $types),
   );
 
@@ -99,16 +99,28 @@ function _webform_edit_multiple_file($component) {
   $form['validation']['extensions']['types']['desktopimages'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Desktop images'),
-    '#options' => drupal_map_assoc($types),
+    '#options' => backdrop_map_assoc($types),
     '#default_value' => array_intersect($current_types, $types),
   );
 
-  $types = array('txt', 'rtf', 'html', 'odf', 'pdf',
-    'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'xml');
+  $types = array(
+    'txt',
+    'rtf',
+    'html',
+    'odf',
+    'pdf',
+    'doc',
+    'docx',
+    'ppt',
+    'pptx',
+    'xls',
+    'xlsx',
+    'xml',
+  );
   $form['validation']['extensions']['types']['documents'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Documents'),
-    '#options' => drupal_map_assoc($types),
+    '#options' => backdrop_map_assoc($types),
     '#default_value' => array_intersect($current_types, $types),
   );
 
@@ -116,7 +128,7 @@ function _webform_edit_multiple_file($component) {
   $form['validation']['extensions']['types']['media'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Media'),
-    '#options' => drupal_map_assoc($types),
+    '#options' => backdrop_map_assoc($types),
     '#default_value' => array_intersect($current_types, $types),
   );
 
@@ -124,7 +136,7 @@ function _webform_edit_multiple_file($component) {
   $form['validation']['extensions']['types']['archives'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Archives'),
-    '#options' => drupal_map_assoc($types),
+    '#options' => backdrop_map_assoc($types),
     '#default_value' => array_intersect($current_types, $types),
   );
 
@@ -168,7 +180,7 @@ function _webform_edit_multiple_file($component) {
     '#access' => webform_variable_get('webform_token_access'),
   );
   $options = array(WEBFORM_MULTIPLE_FILE_CARDINALITY_UNLIMITED => t('Unlimited')) +
-    drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+    backdrop_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
   $form['extra']['cardinality'] = array(
     '#type' => 'select',
     '#title' => t('Number of values'),
@@ -203,7 +215,6 @@ function _webform_edit_multiple_file($component) {
     '#parents' => array('extra', 'wrapper'),
     '#weight' => 20,
   );
-
   return $form;
 }
 
@@ -229,7 +240,7 @@ function _webform_edit_multiple_file_rename_validate($element, &$form_state, $fo
  * @see webform_component_invoke()
  */
 function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE) {
-  $node = isset($component['nid']) ? node_load($component['nid']) : NULL;
+  $node = isset($component['nid'])?node_load($component['nid']) : NULL;
 
   // Cap the upload size according to the PHP limit.
   $max_filesize = parse_size(file_upload_max_size());
@@ -241,7 +252,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
   $element_info = element_info('managed_file');
   $element = array(
     '#type' => 'managed_file',
-    '#title' => $filter ? webform_filter_xss($component['name']) : $component['name'],
+    '#title' => $filter?webform_filter_xss($component['name']) : $component['name'],
     '#title_display' => $component['extra']['title_display'] ? $component['extra']['title_display'] : 'before',
     '#required' => empty($value) ? $component['required'] : FALSE,
     '#default_value' => isset($value[0]) ? $value[0] : NULL,
@@ -252,10 +263,10 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
     ),
     '#pre_render' => array_merge(element_info_property('managed_file', '#pre_render'), array('webform_file_allow_access')),
     '#upload_location' => $component['extra']['scheme'] . '://webform/' . ($filter
-        ? drupal_strtolower(webform_replace_tokens($component['extra']['directory'], $node))
+        ?backdrop_strtolower(webform_replace_tokens($component['extra']['directory'], $node))
         : $component['extra']['directory']),
     '#progress_indicator' => $component['extra']['progress_indicator'],
-    '#description' => $filter ? webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
+    '#description' => $filter?webform_filter_descriptions($component['extra']['description'], $node) : $component['extra']['description'],
     '#weight' => $component['weight'],
     '#process' => array_merge($element_info['#process'], array('webform_multiple_file_process_element')),
     '#theme_wrappers' => array('webform_element'),
@@ -295,7 +306,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
         }
 
         $elements[$delta] = $element;
-        $elements[$delta]['#default_value'] = !empty($fid) ? $fid : NULL;;
+        $elements[$delta]['#default_value'] = !empty($fid) ? $fid : NULL;
         $elements[$delta]['#weight'] = $delta;
         $delta++;
       }
@@ -336,7 +347,7 @@ function _webform_render_multiple_file($component, $value = NULL, $filter = TRUE
  * @see webform_component_invoke()
  */
 function _webform_submit_multiple_file($component, $value) {
-  return isset($value) ? array_filter($value) : NULL;
+  return isset($value)?array_filter($value) : NULL;
 }
 
 /**
@@ -349,9 +360,9 @@ function _webform_display_multiple_file($component, $value, $format = 'html') {
     $files = array();
     foreach ($value as $key => $fid) {
       $files[] = array(
-        '#value' => $fid ? webform_get_file($fid) : NULL,
+        '#value' => $fid?webform_get_file($fid) : NULL,
         '#theme' => 'webform_display_file',
-        '#theme_wrappers' => $format == 'text' ? array('webform_element_text') : array('webform_display_multiple_files_set'),
+        '#theme_wrappers' => $format == 'text'?array('webform_element_text') : array('webform_display_multiple_files_set'),
         '#format' => $format,
         '#parents' => array($key),
         '#webform_component' => $component,
@@ -360,14 +371,14 @@ function _webform_display_multiple_file($component, $value, $format = 'html') {
     $files['#translatable'] = array('title');
     $files['#weight'] = $component['weight'];
     $files['#title'] = $component['name'];
-    $files['#theme_wrappers'] = $format == 'text' ? array('webform_element_text') : array('webform_element');
+    $files['#theme_wrappers'] = $format == 'text'?array('webform_element_text') : array('webform_element');
   }
-  else{
+  else {
     $files = array();
     $files[] = array(
       '#value' => NULL,
       '#theme' => 'webform_display_file',
-      '#theme_wrappers' => $format == 'text' ? array('webform_element_text') : array('webform_display_multiple_files_set'),
+      '#theme_wrappers' => $format == 'text'?array('webform_element_text') : array('webform_display_multiple_files_set'),
       '#format' => $format,
       '#parents' => NULL,
       '#webform_component' => $component,
@@ -375,7 +386,7 @@ function _webform_display_multiple_file($component, $value, $format = 'html') {
     $files['#translatable'] = array('title');
     $files['#weight'] = $component['weight'];
     $files['#title'] = $component['name'];
-    $files['#theme_wrappers'] = $format == 'text' ? array('webform_element_text') : array('webform_element');
+    $files['#theme_wrappers'] = $format == 'text'?array('webform_element_text') : array('webform_element');
   }
 
   return !empty($files) ? $files : NULL;
@@ -521,7 +532,7 @@ function _webform_csv_data_multiple_file($component, $export_options, $value) {
     }
   }
 
-  return empty($files_size) ? array('', '') :
+  return empty($files_size)?array('', '') :
     array(implode("|", $file_urls), (int) $files_size);
 }
 
@@ -539,11 +550,15 @@ function webform_multiple_file_process_element($element, &$form_state, $form) {
   // Ajax settings to upload and remove of any individual file
   // and update group of already uploaded files.
   $parents = array_slice($element['#array_parents'], 0, -1);
-  $cardinality = drupal_array_get_nested_value($form,
+  $cardinality = backdrop_array_get_nested_value($form,
     array_merge($parents, array('#webform_component', 'extra', 'cardinality')));
   if ($cardinality != 1) {
     $new_path = 'file/ajax/' . implode('/', $parents) . '/' . $form['form_build_id']['#value'];
-    $component_element = drupal_array_get_nested_value($form, $parents);
+    // Token here is not generated with backdrop_token() as it does not need to
+    // be session-based.
+    $token = backdrop_hmac_base64($new_path, backdrop_get_private_key() . backdrop_get_hash_salt());
+    $new_path .= '/' . $token;
+    $component_element = backdrop_array_get_nested_value($form, $parents);
     $new_wrapper = $component_element['#id'] . '-ajax-wrapper';
     foreach (element_children($element) as $key) {
       if (isset($element[$key]['#ajax'])) {
@@ -586,14 +601,14 @@ function webform_multiple_file_managed_file_submit($form, &$form_state) {
   $parents = array_slice($button['#parents'], 0, -2);
 
   // Reset input values.
-  drupal_array_set_nested_value($form_state['input'], $parents, NULL);
+  backdrop_array_set_nested_value($form_state['input'], $parents, NULL);
 
   // Webform component info.
-  $component = drupal_array_get_nested_value($form, array_merge($parents, array('#webform_component')));
+  $component = backdrop_array_get_nested_value($form, array_merge($parents, array('#webform_component')));
   $form_key = $component['form_key'];
 
   // All submitted values.
-  $submitted_values = drupal_array_get_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -3));
+  $submitted_values = backdrop_array_get_nested_value($form_state['values'], array_slice($button['#array_parents'], 0, -3));
 
   // Processes values only for multiple files component.
   $component_values = isset($submitted_values[$form_key]) ? $submitted_values[$form_key] : array();
@@ -614,22 +629,23 @@ function webform_multiple_file_managed_file_submit($form, &$form_state) {
   // Seems that is correct to use this key.
   $parents = array('submitted');
   // Update form_state values.
-  drupal_array_set_nested_value($form_state['values'], $parents, $flatten_values);
+  backdrop_array_set_nested_value($form_state['values'], $parents, $flatten_values);
 
   // Adds values to $form_state['storage'] to prevent missing values during another element AJAX-submit.
   $form_state['storage'] = isset($form_state['storage']) ? $form_state['storage'] : array();
-  $storage_values = drupal_array_get_nested_value($form_state['storage'], $parents);
+  $storage_values = backdrop_array_get_nested_value($form_state['storage'], $parents);
   $storage_values = isset($storage_values) ? $storage_values : array();
   foreach ($flatten_values as $cid => $value) {
     $storage_values[$cid] = $value;
   }
-  drupal_array_set_nested_value($form_state['storage'], $parents, $storage_values);
+  backdrop_array_set_nested_value($form_state['storage'], $parents, $storage_values);
 }
 
 /**
  * Theme function for multiple file wrapping.
  */
 function theme_webform_display_multiple_files_set($variables) {
+  // TODO: Should this theme webform_display_multiple_files_set be declared in hook_theme()?
   $output = '<div class="webform-multiple-file">' . $variables['element']['#children'] . '</div>';
   return $output;
 }

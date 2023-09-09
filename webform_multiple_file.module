@@ -62,7 +62,7 @@ function webform_multiple_file_webform_submission_presave($node, &$submission) {
   if ($has_file_components) {
     // If we're updating a submission, build a list of previous files.
     if (isset($submission->sid)) {
-      drupal_static_reset('webform_get_submission');
+      backdrop_static_reset('webform_get_submission');
       $old_submission = webform_get_submission($node->nid, $submission->sid);
 
       foreach ($node->webform['components'] as $cid => $component) {
@@ -86,7 +86,7 @@ function webform_multiple_file_webform_submission_presave($node, &$submission) {
     $previous_renameable = isset($submission->file_usage['renameable']) ? $submission->file_usage['renameable'] : array();
     $submission->file_usage = array(
       'deleted_fids' => array_merge($deleted_fids, array_diff($old_fids, $new_fids)),
-      'added_fids' =>  array_merge($added_fids, array_diff($new_fids, $old_fids)),
+      'added_fids' => array_merge($added_fids, array_diff($new_fids, $old_fids)),
       'renameable' => $previous_renameable + $renameable,
     );
   }

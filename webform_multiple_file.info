@@ -1,7 +1,8 @@
 name = Webform multiple file
 description = Adds a new component to webform to allow multiple file uploads.
-core = 7.x
+backdrop = 1.x
+type = module
 package = Webform
 
-dependencies[] = webform (4.x)
+dependencies[] = webform
 dependencies[] = file
