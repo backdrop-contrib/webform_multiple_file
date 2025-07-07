@@ -1,6 +1,6 @@
 # Webform Multiple File
 
-The Webform Multiple File module provides new Webform component that allows to uploade multiple files at once. 
+The Webform Multiple File module provides new Webform component that allows to upload multiple files at once. 
 The module uses similar principles of file field widget, implements all features of common webform component like validation, export, etc.
 
 
